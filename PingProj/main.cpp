@@ -6,7 +6,7 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-// Выясняем кодировку: использовать Юникод или ASCII кодировку
+// Р’С‹СЏСЃРЅСЏРµРј РєРѕРґРёСЂРѕРІРєСѓ: РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ Р®РЅРёРєРѕРґ РёР»Рё ASCII РєРѕРґРёСЂРѕРІРєСѓ
 #ifdef UNICODE
 	#define cout std::wcout
 #else
@@ -15,7 +15,7 @@
 
 void InitSock(WSADATA&);
 
-// Главная функция программы
+// Р“Р»Р°РІРЅР°СЏ С„СѓРЅРєС†РёСЏ РїСЂРѕРіСЂР°РјРјС‹
 int main(int argc, TCHAR* argv[]) {
 	WSADATA wsaData;
 	
@@ -30,37 +30,37 @@ void InitSock(WSADATA& wsaData) {
 	int errorStateCode;
 	const int sockVersion = 2;
 	errorStateCode = WSAStartup(MAKEWORD(sockVersion, sockVersion), &wsaData);
-	// Проверка на ошибки
+	// РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєРё
 	if (errorStateCode != 0) {
-		cout << TEXT("Ошибка инициализации WinSock #");
+		cout << TEXT("РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё WinSock #");
 		cout << errorStateCode << TEXT(":\n");
 		switch (errorStateCode) {
 		case WSASYSNOTREADY:
-			cout << TEXT("Базовая сетевая подсистема не готова к сетевому взаимодействию.\n");
+			cout << TEXT("Р‘Р°Р·РѕРІР°СЏ СЃРµС‚РµРІР°СЏ РїРѕРґСЃРёСЃС‚РµРјР° РЅРµ РіРѕС‚РѕРІР° Рє СЃРµС‚РµРІРѕРјСѓ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёСЋ.\n");
 			break;
 		case WSAVERNOTSUPPORTED:
-			cout << TEXT("Запрошенная версия сокетов не поддерживается данной реализацией сокетов Windows.\n");
+			cout << TEXT("Р—Р°РїСЂРѕС€РµРЅРЅР°СЏ РІРµСЂСЃРёСЏ СЃРѕРєРµС‚РѕРІ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РґР°РЅРЅРѕР№ СЂРµР°Р»РёР·Р°С†РёРµР№ СЃРѕРєРµС‚РѕРІ Windows.\n");
 			break;
 		case WSAEINPROGRESS:
-			cout << TEXT("Выполняется операция блокировки сокетов.\n");
+			cout << TEXT("Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕРїРµСЂР°С†РёСЏ Р±Р»РѕРєРёСЂРѕРІРєРё СЃРѕРєРµС‚РѕРІ.\n");
 			break;
 		case WSAEPROCLIM:
-			cout << TEXT("Достигнуто ограничение на количество задач, поддерживаемых реализацией сокетов Windows.\n");
+			cout << TEXT("Р”РѕСЃС‚РёРіРЅСѓС‚Рѕ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РґР°С‡, РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹С… СЂРµР°Р»РёР·Р°С†РёРµР№ СЃРѕРєРµС‚РѕРІ Windows.\n");
 			break;
 		case WSAEFAULT:
-			cout << TEXT("Функции передан недопустимый указатель.\n");
+			cout << TEXT("Р¤СѓРЅРєС†РёРё РїРµСЂРµРґР°РЅ РЅРµРґРѕРїСѓСЃС‚РёРјС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ.\n");
 			break;
 		default:
-			cout << TEXT("Сетевая подсистема вернула недопустимое значение.\n");
+			cout << TEXT("РЎРµС‚РµРІР°СЏ РїРѕРґСЃРёСЃС‚РµРјР° РІРµСЂРЅСѓР»Р° РЅРµРґРѕРїСѓСЃС‚РёРјРѕРµ Р·РЅР°С‡РµРЅРёРµ.\n");
 			break;
 		}
 		exit(1);
 	}
 	else if (LOBYTE(wsaData.wVersion) != sockVersion ||
 	  HIBYTE(wsaData.wVersion) != sockVersion) {
-		cout << TEXT("Не найдена указанная версия Winsock.dll.\n");
+		cout << TEXT("РќРµ РЅР°Р№РґРµРЅР° СѓРєР°Р·Р°РЅРЅР°СЏ РІРµСЂСЃРёСЏ Winsock.dll.\n");
 		WSACleanup();
 		exit(2);
 	}
-	else cout << TEXT("Всё в порядке.\n");
+	else cout << TEXT("Р’СЃС‘ РІ РїРѕСЂСЏРґРєРµ.\n");
 }
