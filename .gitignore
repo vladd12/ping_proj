@@ -27,7 +27,7 @@
 *.out
 *.app
 
-# Visual Studio Ignore
+# Visual Studio files
 *.sdf
 *.opendb
 *.suo
@@ -36,6 +36,8 @@
 *.log
 *.tlog
 *.ilk
-./PingProj/.vs/*
+./Debug/*
+./Release/*
+./.vs/*
 ./PingProj/Debug/*
 ./PingProj/Release/*
