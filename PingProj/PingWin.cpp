@@ -7,7 +7,7 @@
 
 using namespace std;
 
-#define TIME_OUT 5000
+#define TIME_OUT 4000
 #define REQUESTS 4
 
 unsigned long ipaddr = INADDR_NONE;     // Пингуемый адрес в формате,
