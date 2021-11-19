@@ -1,9 +1,12 @@
-﻿#include "winsock2.h"
-#include "iphlpapi.h"
-#include "IcmpAPI.h"
+﻿#include <WinSock2.h>
+#include <IPHlpApi.h>
+#include <IcmpAPI.h>
+#include <WS2tcpip.h>
 #include <string>
 #include <iostream>
-#pragma warning(disable : 4996)
+
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "Iphlpapi.lib")
 
 using namespace std;
 
@@ -24,27 +27,27 @@ HANDLE icmpH;							// Дескриптор
 /// </summary>
 /// <param name="addr"></param>
 void notResponce(char* addr) {
-	cout << "Address " + (string)addr + " is not responding. " "\n";
+	cout << "Address " << string(addr) << " is not responding:\n";
 	DWORD errCode = GetLastError();
 	switch (errCode)
 	{
 	case ERROR_INSUFFICIENT_BUFFER:
-		cout << "responceTotalSize is too small\n";
+		cout << "responceTotalSize is too small.\n";
 		break;
 	case ERROR_INVALID_PARAMETER:
-		cout << "Invalid parameter\n";
+		cout << "Invalid parameter.\n";
 		break;
 	case ERROR_NOT_ENOUGH_MEMORY:
-		cout << "Not enough memory to end operation\n";
+		cout << "Not enough memory to end operation.\n";
 		break;
 	case ERROR_NOT_SUPPORTED:
-		cout << "IPv4 not supported on local computer\n";
+		cout << "IPv4 not supported on local computer.\n";
 		break;
 	case IP_BUF_TOO_SMALL:
-		cout << "ResponceBuffer was too small\n";
+		cout << "ResponceBuffer was too small.\n";
 		break;
 	default:
-		cout << "The response timeout has expired\n";
+		cout << "The response timeout has expired.\n";
 		break;
 	}
 }
@@ -55,10 +58,9 @@ void responceProcessing(char* addr) {
 	in_addr.S_un.S_addr = echo->Address;								// Запись эхо-адреса для дальнейшего преобразования
 																		// адреса преобразуется в строковое
 
-	cout << "Ping address: " + (string)addr + "\n";
-	cout << "Round trip time: " + to_string(echo->RoundTripTime) + "\n";
-	cout << "Replying address: " + (string)inet_ntoa(in_addr) + "\n";
-	cout << "Echo status: " + to_string(echo->Status) + "\n \n";
+	cout << "Ping address: " << string(addr) << '\n';
+	cout << "Round trip time: " << echo->RoundTripTime << '\n';
+	cout << "Echo status: " << echo->Status << "\n\n";
 	Sleep(1000);
 }
 
@@ -71,10 +73,16 @@ int main(int argc, char* args[]) {
 		return 1;
 	}
 	char* address = args[1];
-	ipaddr = inet_addr(address);			// Перевод строчного представления адреса в
-											// требуемый формат. Ожмдается запись вида 8.8.8.8
-											// TODO: предварительно проверять, введён DNS или IP, если DNS - получить адрес по имени
-	icmpH = IcmpCreateFile();				// Открытие дескриптора
+
+	
+	in_addr ip_to_num;									// Структура для хранения числового представления
+														// полученного IP-адреса.
+	int erStat;											// Хранит код возврата выполнения функции.
+	erStat = inet_pton(AF_INET, address, &ip_to_num);	// Перевод строчного представления адреса в
+														// требуемый формат. Ожидается запись вида 8.8.8.8
+														// TODO: предварительно проверять, введён DNS или IP, если DNS - получить адрес по имени
+	ipaddr = ip_to_num.S_un.S_addr;						// Сохраняем IP адрес в переменной типа ULONG						
+	icmpH = IcmpCreateFile();							// Открытие дескриптора
 
 	responceTotalSize = sizeof(ICMP_ECHO_REPLY) + sizeof(message);			// Размер буфера ответа
 																			// Должен быть достаточно большим для структуры
