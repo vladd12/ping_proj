@@ -1,97 +1,228 @@
-#include <fstream>
-#include <iostream>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <string>
-#include <stdio.h>
-#include <vector>
+#include "main.hpp"
+#include "logger.hpp"
 
 #pragma comment(lib, "Ws2_32.lib")
 
-// Р’С‹СЏСЃРЅСЏРµРј РєРѕРґРёСЂРѕРІРєСѓ: РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ Р®РЅРёРєРѕРґ РёР»Рё ASCII РєРѕРґРёСЂРѕРІРєСѓ
-#ifdef UNICODE
-	#define cout std::wcout
-	#define local ""
-	#define string std::wstring
-	#define rFile std::wifstream
-	#define wFile std::wofstream
-#else
-	#define cout std::cout
-	#define local "Russian"
-	#define string std::string
-	#define rFile std::ifstream
-	#define wFile std::ofstream
-#endif
-
-void InitSock(WSADATA&);
-
-// Р“Р»Р°РІРЅР°СЏ С„СѓРЅРєС†РёСЏ РїСЂРѕРіСЂР°РјРјС‹
+// Главная функция программы
 int main(int argc, TCHAR* argv[]) {
-	setlocale(LC_ALL, local);
+	setlocale(LC_ALL, dLocale);
+	// TCHAR* argarr[] = {L"prog", L"8.8.8.8"};
 	WSADATA wsaData;
-	InitSock(wsaData);
-	WSACleanup();
+	IN_ADDR IP_Address;
+	SOCKADDR_IN remote;
+	SOCKADDR_IN bind;
+	SOCKADDR_IN local;
+	SOCKET listen;
+	listen = NULL;
+	WORD port;
+	port = 1234;
+	DWORD timeout;
+	timeout = 1000;
+
+	// Главная хрень
+	switch (InitLogger()) {
+	case FUNC_SUCCESS:
+		switch (InitNetworkSubsystem(wsaData)) {
+		case FUNC_SUCCESS:
+			switch (CheckParams(argc, argv, IP_Address)) {
+			case FUNC_SUCCESS:
+				switch (InitSocks(remote, bind, local, listen, IP_Address, port, timeout)) {
+				case FUNC_SUCCESS:
+					cout << 5 << endl;
+					break;
+				case FUNC_ERROR:
+					/// TODO: Доделать перехватчик ошибок
+					cout << 4 << endl;
+					break;
+				}
+				break;
+			case FUNC_ERROR:
+				/// TODO: Доделать перехватчик ошибок
+				cout << 3 << endl;
+				break;
+			}
+			break;
+		case FUNC_ERROR:
+			/// TODO: Доделать перехватчик ошибок
+			cout << 2 << endl;
+			break;
+		}
+		break;
+	case FUNC_ERROR:
+		/// TODO: Доделать перехватчик ошибок
+		cout << 1 << endl;
+		break;
+	}
+
+
+
+
 	system("pause");
 	return 0;
 }
 
-// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРµС‚РµРІРѕР№ РїРѕРґСЃРёСЃС‚РµРјС‹ Рё СЃРѕРєРµС‚Р°
-void InitSock(WSADATA& wsaData) {
-	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРµС‚РµРІРѕР№ РїРѕРґСЃРёСЃС‚РµРјС‹
+// Запуск сетевой подсистемы Windows
+int InitNetworkSubsystem(WSADATA& wsaData) {
+	// Инициализация сетевой подсистемы
 	int errorStateCode;
 	const int sockVersion = 2;
 	errorStateCode = WSAStartup(MAKEWORD(sockVersion, sockVersion), &wsaData);
 
-	// РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєРё
+	// Проверка на ошибки
+	/// TODO: Перенести код в логгер
 	if (errorStateCode != 0) {
-		cout << TEXT("РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё WinSock #");
+		cout << TEXT("Ошибка инициализации WinSock #");
 		cout << errorStateCode << TEXT(":\n");
 		switch (errorStateCode) {
 		case WSASYSNOTREADY:
-			cout << TEXT("Р‘Р°Р·РѕРІР°СЏ СЃРµС‚РµРІР°СЏ РїРѕРґСЃРёСЃС‚РµРјР° РЅРµ РіРѕС‚РѕРІР° Рє СЃРµС‚РµРІРѕРјСѓ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёСЋ.\n");
+			cout << TEXT("Базовая сетевая подсистема не готова к сетевому взаимодействию.\n");
 			break;
 		case WSAVERNOTSUPPORTED:
-			cout << TEXT("Р—Р°РїСЂРѕС€РµРЅРЅР°СЏ РІРµСЂСЃРёСЏ СЃРѕРєРµС‚РѕРІ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РґР°РЅРЅРѕР№ СЂРµР°Р»РёР·Р°С†РёРµР№ СЃРѕРєРµС‚РѕРІ Windows.\n");
+			cout << TEXT("Запрошенная версия сокетов не поддерживается данной реализацией сокетов Windows.\n");
 			break;
 		case WSAEINPROGRESS:
-			cout << TEXT("Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕРїРµСЂР°С†РёСЏ Р±Р»РѕРєРёСЂРѕРІРєРё СЃРѕРєРµС‚РѕРІ.\n");
+			cout << TEXT("Выполняется операция блокировки сокетов.\n");
 			break;
 		case WSAEPROCLIM:
-			cout << TEXT("Р”РѕСЃС‚РёРіРЅСѓС‚Рѕ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РґР°С‡, РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹С… СЂРµР°Р»РёР·Р°С†РёРµР№ СЃРѕРєРµС‚РѕРІ Windows.\n");
+			cout << TEXT("Достигнуто ограничение на количество задач, поддерживаемых реализацией сокетов Windows.\n");
 			break;
 		case WSAEFAULT:
-			cout << TEXT("Р¤СѓРЅРєС†РёРё РїРµСЂРµРґР°РЅ РЅРµРґРѕРїСѓСЃС‚РёРјС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ.\n");
+			cout << TEXT("Функции передан недопустимый указатель.\n");
 			break;
 		default:
-			cout << TEXT("РЎРµС‚РµРІР°СЏ РїРѕРґСЃРёСЃС‚РµРјР° РІРµСЂРЅСѓР»Р° РЅРµРґРѕРїСѓСЃС‚РёРјРѕРµ Р·РЅР°С‡РµРЅРёРµ.\n");
+			cout << TEXT("Сетевая подсистема вернула недопустимое значение.\n");
 			break;
 		}
-		exit(1);
+		return FUNC_ERROR;
 	}
+	/// TODO: Перенести код в логгер
 	else if (LOBYTE(wsaData.wVersion) != sockVersion ||
 		HIBYTE(wsaData.wVersion) != sockVersion) {
-		cout << TEXT("РќРµ РЅР°Р№РґРµРЅР° СѓРєР°Р·Р°РЅРЅР°СЏ РІРµСЂСЃРёСЏ Winsock.dll.\n");
+		cout << TEXT("Не найдена указанная версия Winsock.dll.\n");
 		WSACleanup();
-		exit(2);
+		return FUNC_ERROR;
 	}
-	else cout << TEXT("Р’СЃС‘ РІ РїРѕСЂСЏРґРєРµ.\n");
-
-	// 
-	SOCKET ServSock = socket(AF_INET, SOCK_STREAM, 0);
-	if (ServSock == INVALID_SOCKET) {
-		errorStateCode = WSAGetLastError();
-		cout << TEXT("Error initialization socket # ") << errorStateCode << TEXT(":\n");
-		/*
-		// Р—РґРµСЃСЊ РЅР°РґРѕ РІР·СЏС‚СЊ Рё РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РєР°Р¶РґСѓСЋ РѕС€РёР±РєСѓ РёР·
-		// https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
-		// РёР»Рё https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
-		switch (errorStateCode) {
-
-		}
-		*/
-		closesocket(ServSock);
-		WSACleanup();
-		exit(3);
-	}
-	else cout << TEXT("Server socket initialization is OK.\n");
+	else return FUNC_SUCCESS;
 }
+
+// Проверка переданных программе параметров
+int CheckParams(int argc, TCHAR* argv[], IN_ADDR& IPtoNum) {
+	// Проверка на кол-во параметров
+	if (argc < 2) {
+		/// TODO:
+		// Код для логгера и перехватчика ошибок
+		return FUNC_ERROR;
+	}
+	// Проверка на корректность введённого IP/DNS адреса
+	else if (CorrectIP_DNS(argv[1], IPtoNum) == FUNC_ERROR) {
+		/// TODO:
+		// Код для логгера и перехватчика ошибок
+		return FUNC_ERROR;
+	}
+	//
+	else {
+		/// TODO: Доделать, если будет несколько флагов
+		/*
+		// Если больше двух параметром, обрабатываем их
+		if (argc > 2) {
+			vector<string> params;
+			int i;
+			for (i = 2; i < argc; i++) {
+				params.push_back(string(argv[i]));
+				return FUNC_SUCCESS;
+			}
+		}
+		else
+		*/
+			return FUNC_SUCCESS;
+	}
+}
+
+// Проверка корректности написания IP, 
+int CorrectIP_DNS(TCHAR* IP, IN_ADDR& IPtoNum) {
+	int erStat;	
+	erStat = inet_pton(AF_INET, IP, &IPtoNum);
+	if (IPtoNum.S_un.S_addr == INADDR_NONE) {
+		//hostent* hp = NULL;
+		//hp = gethostbyname(IP);
+		LPSOCKADDR sockaddr_ip;
+		ADDRINFO* result = NULL;
+		ADDRINFO hints;
+		ZeroMemory(&hints, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_ICMP;
+		int errorStateCode;
+		errorStateCode = getaddrinfo(IP, NULL, &hints, &result);
+		if (errorStateCode != 0) {
+			/// TODO: Доделать перехватчик ошибок
+			// Код для логгера и перехватчика ошибок
+			return FUNC_ERROR;
+		}
+		else {
+			LPIN_ADDR ipNum;
+			sockaddr_ip = result->ai_addr;
+			ipNum = &((LPSOCKADDR_IN)sockaddr_ip)->sin_addr;
+			IPtoNum = *ipNum;
+			return FUNC_SUCCESS;
+		}
+	}
+	else return FUNC_SUCCESS;
+}
+
+// Инициализация сетевой подсистемы и сокета
+int InitSocks(SOCKADDR_IN& remote, SOCKADDR_IN& bind, SOCKADDR_IN& local, SOCKET& listen,
+	IN_ADDR& ip_num, WORD& port, DWORD& timeout) {
+	// Создаём сокет и проверяем на наличие ошибок при создании
+	int errorStateCode;
+	listen = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if (listen == INVALID_SOCKET || listen == NULL) {
+		/// TODO: Доделать перехватчик ошибок
+		// Код для логгера и перехватчика ошибок
+		errorStateCode = WSAGetLastError();
+		cout << TEXT("Ошибка создания сокета: # ") << errorStateCode << TEXT(":\n");
+
+		/// TODO: Вынести в финальную функцию
+		// Код для логгера и перехватчика ошибок
+		closesocket(listen);
+		WSACleanup();
+		return FUNC_ERROR;
+	}
+
+	// Полученный сокет будет принимать данные
+	errorStateCode = setsockopt(listen, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+	if (errorStateCode != 0) {
+		/// TODO: Вынести в финальную функцию
+		// Код для логгера и перехватчика ошибок
+		return FUNC_ERROR;
+	}
+
+	// Настройка адресов
+	remote.sin_addr = ip_num;
+	remote.sin_family = AF_INET;
+	remote.sin_port = htons(port);
+
+	bind.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+	bind.sin_family = AF_INET;
+	bind.sin_port = htons(port);
+
+	local.sin_family = AF_INET;
+
+	closesocket(listen);
+	WSACleanup();
+	return FUNC_SUCCESS;
+}
+
+
+
+
+
+
+
+
+
+#ifdef _DEBUG 
+#define num1
+#else
+#define num2
+#endif
