@@ -3,9 +3,10 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-// Главная функция программы
+// Р“Р»Р°РІРЅР°СЏ С„СѓРЅРєС†РёСЏ РїСЂРѕРіСЂР°РјРјС‹
 int main(int argc, TCHAR* argv[]) {
 	setlocale(LC_ALL, dLocale);
+	//cout << sizeof(ECHOREPLY) << endl;
 	// TCHAR* argarr[] = {L"prog", L"8.8.8.8"};
 	WSADATA wsaData;
 	IN_ADDR IP_Address;
@@ -17,113 +18,140 @@ int main(int argc, TCHAR* argv[]) {
 	WORD port;
 	port = 1234;
 	DWORD timeout;
-	timeout = 1000;
+	timeout = 5000;
+	UINT steps, seq;
+	steps = 4;
+	seq = 1;
+	clock_t start, end;
 
-	// Главная хрень
+	// Р“Р»Р°РІРЅР°СЏ С…СЂРµРЅСЊ
 	switch (InitLogger()) {
 	case FUNC_SUCCESS:
 		switch (InitNetworkSubsystem(wsaData)) {
 		case FUNC_SUCCESS:
 			switch (CheckParams(argc, argv, IP_Address)) {
 			case FUNC_SUCCESS:
-				switch (InitSocks(remote, bind, local, listen, IP_Address, port, timeout)) {
+				switch (InitSocks(remote, bind, local,
+					listen, IP_Address, port, timeout)) {
 				case FUNC_SUCCESS:
-					cout << 5 << endl;
+					while (seq <= steps) {
+						switch (SendRequest(remote, listen, seq, start)) {
+						case FUNC_SUCCESS:
+							switch (GetReply(remote, local, listen, start, end)) {
+							case FUNC_SUCCESS:
+								cout << 7 << endl;
+								break;
+							case FUNC_ERROR:
+								/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
+								cout << 6 << endl;
+								break;
+							}
+							break;
+						case FUNC_ERROR:
+							/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
+							cout << 5 << endl;
+							return 1;
+							break;
+						}
+						seq++;
+					}
 					break;
 				case FUNC_ERROR:
-					/// TODO: Доделать перехватчик ошибок
+					/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
 					cout << 4 << endl;
 					break;
 				}
 				break;
 			case FUNC_ERROR:
-				/// TODO: Доделать перехватчик ошибок
+				/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
 				cout << 3 << endl;
 				break;
 			}
 			break;
 		case FUNC_ERROR:
-			/// TODO: Доделать перехватчик ошибок
+			/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
 			cout << 2 << endl;
 			break;
 		}
 		break;
 	case FUNC_ERROR:
-		/// TODO: Доделать перехватчик ошибок
+		/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
 		cout << 1 << endl;
 		break;
 	}
 
 
 
-
+	/// TODO: Р’С‹РЅРµСЃС‚Рё РІ final, РїРѕС‚РѕРј СѓР±СЂР°С‚СЊ
+	closesocket(listen);
+	WSACleanup();
 	system("pause");
 	return 0;
 }
 
-// Запуск сетевой подсистемы Windows
+// Р—Р°РїСѓСЃРє СЃРµС‚РµРІРѕР№ РїРѕРґСЃРёСЃС‚РµРјС‹ Windows
 int InitNetworkSubsystem(WSADATA& wsaData) {
-	// Инициализация сетевой подсистемы
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРµС‚РµРІРѕР№ РїРѕРґСЃРёСЃС‚РµРјС‹
 	int errorStateCode;
 	const int sockVersion = 2;
 	errorStateCode = WSAStartup(MAKEWORD(sockVersion, sockVersion), &wsaData);
 
-	// Проверка на ошибки
-	/// TODO: Перенести код в логгер
+	// РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєРё
+	/// TODO: РџРµСЂРµРЅРµСЃС‚Рё РєРѕРґ РІ Р»РѕРіРіРµСЂ
 	if (errorStateCode != 0) {
-		cout << TEXT("Ошибка инициализации WinSock #");
+		cout << TEXT("РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё WinSock #");
 		cout << errorStateCode << TEXT(":\n");
 		switch (errorStateCode) {
 		case WSASYSNOTREADY:
-			cout << TEXT("Базовая сетевая подсистема не готова к сетевому взаимодействию.\n");
+			cout << TEXT("Р‘Р°Р·РѕРІР°СЏ СЃРµС‚РµРІР°СЏ РїРѕРґСЃРёСЃС‚РµРјР° РЅРµ РіРѕС‚РѕРІР° Рє СЃРµС‚РµРІРѕРјСѓ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёСЋ.\n");
 			break;
 		case WSAVERNOTSUPPORTED:
-			cout << TEXT("Запрошенная версия сокетов не поддерживается данной реализацией сокетов Windows.\n");
+			cout << TEXT("Р—Р°РїСЂРѕС€РµРЅРЅР°СЏ РІРµСЂСЃРёСЏ СЃРѕРєРµС‚РѕРІ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РґР°РЅРЅРѕР№ СЂРµР°Р»РёР·Р°С†РёРµР№ СЃРѕРєРµС‚РѕРІ Windows.\n");
 			break;
 		case WSAEINPROGRESS:
-			cout << TEXT("Выполняется операция блокировки сокетов.\n");
+			cout << TEXT("Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РѕРїРµСЂР°С†РёСЏ Р±Р»РѕРєРёСЂРѕРІРєРё СЃРѕРєРµС‚РѕРІ.\n");
 			break;
 		case WSAEPROCLIM:
-			cout << TEXT("Достигнуто ограничение на количество задач, поддерживаемых реализацией сокетов Windows.\n");
+			cout << TEXT("Р”РѕСЃС‚РёРіРЅСѓС‚Рѕ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РґР°С‡, РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹С… СЂРµР°Р»РёР·Р°С†РёРµР№ СЃРѕРєРµС‚РѕРІ Windows.\n");
 			break;
 		case WSAEFAULT:
-			cout << TEXT("Функции передан недопустимый указатель.\n");
+			cout << TEXT("Р¤СѓРЅРєС†РёРё РїРµСЂРµРґР°РЅ РЅРµРґРѕРїСѓСЃС‚РёРјС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ.\n");
 			break;
 		default:
-			cout << TEXT("Сетевая подсистема вернула недопустимое значение.\n");
+			cout << TEXT("РЎРµС‚РµРІР°СЏ РїРѕРґСЃРёСЃС‚РµРјР° РІРµСЂРЅСѓР»Р° РЅРµРґРѕРїСѓСЃС‚РёРјРѕРµ Р·РЅР°С‡РµРЅРёРµ.\n");
 			break;
 		}
 		return FUNC_ERROR;
 	}
-	/// TODO: Перенести код в логгер
+	/// TODO: РџРµСЂРµРЅРµСЃС‚Рё РєРѕРґ РІ Р»РѕРіРіРµСЂ
 	else if (LOBYTE(wsaData.wVersion) != sockVersion ||
 		HIBYTE(wsaData.wVersion) != sockVersion) {
-		cout << TEXT("Не найдена указанная версия Winsock.dll.\n");
+		cout << TEXT("РќРµ РЅР°Р№РґРµРЅР° СѓРєР°Р·Р°РЅРЅР°СЏ РІРµСЂСЃРёСЏ Winsock.dll.\n");
 		WSACleanup();
 		return FUNC_ERROR;
 	}
 	else return FUNC_SUCCESS;
 }
 
-// Проверка переданных программе параметров
+// РџСЂРѕРІРµСЂРєР° РїРµСЂРµРґР°РЅРЅС‹С… РїСЂРѕРіСЂР°РјРјРµ РїР°СЂР°РјРµС‚СЂРѕРІ
 int CheckParams(int argc, TCHAR* argv[], IN_ADDR& IPtoNum) {
-	// Проверка на кол-во параметров
+	// РџСЂРѕРІРµСЂРєР° РЅР° РєРѕР»-РІРѕ РїР°СЂР°РјРµС‚СЂРѕРІ
 	if (argc < 2) {
 		/// TODO:
-		// Код для логгера и перехватчика ошибок
+		// РљРѕРґ РґР»СЏ Р»РѕРіРіРµСЂР° Рё РїРµСЂРµС…РІР°С‚С‡РёРєР° РѕС€РёР±РѕРє
 		return FUNC_ERROR;
 	}
-	// Проверка на корректность введённого IP/DNS адреса
+	// РџСЂРѕРІРµСЂРєР° РЅР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚СЊ РІРІРµРґС‘РЅРЅРѕРіРѕ IP/DNS Р°РґСЂРµСЃР°
 	else if (CorrectIP_DNS(argv[1], IPtoNum) == FUNC_ERROR) {
 		/// TODO:
-		// Код для логгера и перехватчика ошибок
+		// РљРѕРґ РґР»СЏ Р»РѕРіРіРµСЂР° Рё РїРµСЂРµС…РІР°С‚С‡РёРєР° РѕС€РёР±РѕРє
 		return FUNC_ERROR;
 	}
 	//
 	else {
-		/// TODO: Доделать, если будет несколько флагов
+		/// TODO: Р”РѕРґРµР»Р°С‚СЊ, РµСЃР»Рё Р±СѓРґРµС‚ РЅРµСЃРєРѕР»СЊРєРѕ С„Р»Р°РіРѕРІ
 		/*
-		// Если больше двух параметром, обрабатываем их
+		// Р•СЃР»Рё Р±РѕР»СЊС€Рµ РґРІСѓС… РїР°СЂР°РјРµС‚СЂРѕРј, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РёС…
 		if (argc > 2) {
 			vector<string> params;
 			int i;
@@ -138,13 +166,11 @@ int CheckParams(int argc, TCHAR* argv[], IN_ADDR& IPtoNum) {
 	}
 }
 
-// Проверка корректности написания IP, 
+// РџСЂРѕРІРµСЂРєР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚Рё РЅР°РїРёСЃР°РЅРёСЏ IP, 
 int CorrectIP_DNS(TCHAR* IP, IN_ADDR& IPtoNum) {
 	int erStat;	
 	erStat = inet_pton(AF_INET, IP, &IPtoNum);
 	if (IPtoNum.S_un.S_addr == INADDR_NONE) {
-		//hostent* hp = NULL;
-		//hp = gethostbyname(IP);
 		LPSOCKADDR sockaddr_ip;
 		ADDRINFO* result = NULL;
 		ADDRINFO hints;
@@ -155,8 +181,8 @@ int CorrectIP_DNS(TCHAR* IP, IN_ADDR& IPtoNum) {
 		int errorStateCode;
 		errorStateCode = getaddrinfo(IP, NULL, &hints, &result);
 		if (errorStateCode != 0) {
-			/// TODO: Доделать перехватчик ошибок
-			// Код для логгера и перехватчика ошибок
+			/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
+			// РљРѕРґ РґР»СЏ Р»РѕРіРіРµСЂР° Рё РїРµСЂРµС…РІР°С‚С‡РёРєР° РѕС€РёР±РѕРє
 			return FUNC_ERROR;
 		}
 		else {
@@ -170,59 +196,150 @@ int CorrectIP_DNS(TCHAR* IP, IN_ADDR& IPtoNum) {
 	else return FUNC_SUCCESS;
 }
 
-// Инициализация сетевой подсистемы и сокета
+// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРµС‚РµРІРѕР№ РїРѕРґСЃРёСЃС‚РµРјС‹ Рё СЃРѕРєРµС‚Р°
 int InitSocks(SOCKADDR_IN& remote, SOCKADDR_IN& bind, SOCKADDR_IN& local, SOCKET& listen,
 	IN_ADDR& ip_num, WORD& port, DWORD& timeout) {
-	// Создаём сокет и проверяем на наличие ошибок при создании
+	// РЎРѕР·РґР°С‘Рј СЃРѕРєРµС‚ Рё РїСЂРѕРІРµСЂСЏРµРј РЅР° РЅР°Р»РёС‡РёРµ РѕС€РёР±РѕРє РїСЂРё СЃРѕР·РґР°РЅРёРё
 	int errorStateCode;
 	listen = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	//listen = WSASocket(AF_INET, SOCK_RAW, IPPROTO_ICMP, 0, 0, WSA_FLAG_OVERLAPPED);
 	if (listen == INVALID_SOCKET || listen == NULL) {
-		/// TODO: Доделать перехватчик ошибок
-		// Код для логгера и перехватчика ошибок
+		/// TODO: Р”РѕРґРµР»Р°С‚СЊ РїРµСЂРµС…РІР°С‚С‡РёРє РѕС€РёР±РѕРє
+		// РљРѕРґ РґР»СЏ Р»РѕРіРіРµСЂР° Рё РїРµСЂРµС…РІР°С‚С‡РёРєР° РѕС€РёР±РѕРє
 		errorStateCode = WSAGetLastError();
-		cout << TEXT("Ошибка создания сокета: # ") << errorStateCode << TEXT(":\n");
+		cout << TEXT("РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ СЃРѕРєРµС‚Р°: # ") << errorStateCode << TEXT(":\n");
 
-		/// TODO: Вынести в финальную функцию
-		// Код для логгера и перехватчика ошибок
+		/// TODO: Р’С‹РЅРµСЃС‚Рё РІ С„РёРЅР°Р»СЊРЅСѓСЋ С„СѓРЅРєС†РёСЋ
+		// РљРѕРґ РґР»СЏ Р»РѕРіРіРµСЂР° Рё РїРµСЂРµС…РІР°С‚С‡РёРєР° РѕС€РёР±РѕРє
 		closesocket(listen);
 		WSACleanup();
 		return FUNC_ERROR;
 	}
 
-	// Полученный сокет будет принимать данные
+	// РџРѕР»СѓС‡РµРЅРЅС‹Р№ СЃРѕРєРµС‚ Р±СѓРґРµС‚ РїСЂРёРЅРёРјР°С‚СЊ РґР°РЅРЅС‹Рµ
 	errorStateCode = setsockopt(listen, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 	if (errorStateCode != 0) {
-		/// TODO: Вынести в финальную функцию
-		// Код для логгера и перехватчика ошибок
+		/// TODO: Р’С‹РЅРµСЃС‚Рё РІ С„РёРЅР°Р»СЊРЅСѓСЋ С„СѓРЅРєС†РёСЋ
+		// РљРѕРґ РґР»СЏ Р»РѕРіРіРµСЂР° Рё РїРµСЂРµС…РІР°С‚С‡РёРєР° РѕС€РёР±РѕРє
 		return FUNC_ERROR;
 	}
 
-	// Настройка адресов
+	// РќР°СЃС‚СЂРѕР№РєР° Р°РґСЂРµСЃРѕРІ
 	remote.sin_addr = ip_num;
 	remote.sin_family = AF_INET;
 	remote.sin_port = htons(port);
-
 	bind.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 	bind.sin_family = AF_INET;
 	bind.sin_port = htons(port);
-
 	local.sin_family = AF_INET;
-
-	closesocket(listen);
-	WSACleanup();
 	return FUNC_SUCCESS;
+}
+
+// Р¤РѕСЂРјРёСЂСѓРµРј СЌС…Рѕ-Р·Р°РїСЂРѕСЃ Рё РїРѕСЃС‹Р»Р°РµРј РµРіРѕ СѓРґР°Р»С‘РЅРЅРѕРјСѓ СѓСЃС‚СЂРѕР№СЃС‚РІСѓ
+int SendRequest(SOCKADDR_IN& remote, SOCKET& listen, WORD SeqNum, clock_t& start) {
+	try {
+		// Р¤РѕСЂРјРёСЂСѓРµРј СЌС…Рѕ-Р·Р°РїСЂРѕСЃ
+		ECHOREQUEST req;
+		req.icmpHdr.Type = 8;
+		req.icmpHdr.Code = 0;
+		req.icmpHdr.ID = (uint16_t)GetCurrentProcessId();
+		req.icmpHdr.Seq = SeqNum;
+		memset(req.cData, char(0xFF), DATA_SIZE);
+		req.dwTime = GetTickCount();
+		req.icmpHdr.Checksum = CRC16((uint8_t*)&req, sizeof(req));
+		
+		// РћС‚РїСЂР°РІР»СЏРµРј РґР°РЅРЅС‹Рµ
+		int erStat;
+		erStat = sendto(listen, (char*)&req, sizeof(req), 0, (sockaddr*)&remote, sizeof(remote));
+		start = clock();
+		/// TODO: Р›РѕРіРіРµСЂ РґРѕР»Р¶РµРЅ Р·Р°РїРёСЃР°С‚СЊ, С‡С‚Рѕ РѕС‚РїСЂР°РІР»РµРЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ РЅР° СЌС‚РѕС‚ Р°РґСЂРµСЃСЃ
+		if (erStat == SOCKET_ERROR) {
+			erStat = WSAGetLastError();
+			/// TODO: РћР±СЂР°Р±РѕС‚С‡РёРє РѕС€РёР±РѕРє РґРѕР»Р¶РµРЅ РїСЂРёРЅСЏС‚СЊ Рё РѕР±СЂР°Р±РѕС‚Р°С‚СЊ erStat
+			return FUNC_ERROR;
+		}
+		return FUNC_SUCCESS;
+	}
+	catch (std::exception& e) {
+		/// TODO: РР»Рё РѕР±СЂР°С‰Р°С‚СЊСЃСЏ Рє РѕР±СЂР°Р±РѕС‚С‡РёРєСѓ РѕС€РёР±РѕРє
+		cout << e.what() << endl;
+		return FUNC_ERROR;
+	}
+}
+
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЂР°СЃС‡С‘С‚Р° РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ CRC16
+uint16_t CRC16(const uint8_t* data_p, unsigned int length) {
+	uint16_t x;
+	uint16_t crc = 0xFFFF;
+	while (length--) {
+		x = crc >> 8 ^ *data_p++;
+		x ^= x >> 4;
+		crc = (crc << 8) ^ (x << 12) ^ (x << 5) ^ x;
+	}
+	return crc;
+}
+
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЌС…Рѕ-РѕС‚РІРµС‚Р°
+int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen, clock_t& start, clock_t& end) {
+	try {
+		const int BUFFER_SIZE = 256;
+		char buffer[BUFFER_SIZE];
+		bool timeout;
+		timeout = false;
+		int local_size;
+		local_size = sizeof(local);
+
+		// РџРѕР»СѓС‡Р°РµРј СЌС…Рѕ-РѕС‚РІРµС‚
+		if (recvfrom(listen, buffer, BUFFER_SIZE, 0, (sockaddr*)&local, &local_size) == SOCKET_ERROR) {
+			if (WSAGetLastError() == WSAETIMEDOUT) {
+				/// TODO: Р—Р°РїРёСЃСЊ Р»РѕРіРіРµСЂРѕРј, С‡С‚Рѕ РїСЂРµРІС‹С€РµРЅРѕ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ
+				cout << TEXT("РЈР·РµР»: ");
+				ShowIpAddress(remote.sin_addr);
+				cout << TEXT(".\nРџСЂРµРІС‹С€РµРЅ РёРЅС‚РµСЂРІР°Р» РѕР¶РёРґР°РЅРёСЏ Р·Р°РїСЂРѕСЃР°.\n");
+				timeout = true;
+			}
+			else {
+				/// TODO: Р”РѕР±Р°РІРёС‚СЊ РєРѕРґ РѕР±СЂР°Р±РѕС‚С‡РёРєР° РѕС€РёР±РѕРє Рё Р»РѕРіРіРµСЂР°
+				return FUNC_ERROR;
+			}
+		}
+		else end = clock();
+
+		// Р•СЃР»Рё РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ РЅРµ РёСЃС‚РµРєР»Рѕ
+		if (!timeout) {
+			PECHOREPLY ptrReply;
+			ptrReply = (ECHOREPLY*)buffer;
+			if (ptrReply->EchoRequest.icmpHdr.ID == GetCurrentProcessId()) {
+				clock_t time = end - start;
+				cout << TEXT("РћС‚РІРµС‚ РѕС‚ ");
+				ShowIpAddress(remote.sin_addr);
+				cout << TEXT(": РІСЂРµРјСЏ РѕР±РјРµРЅР° РґР°РЅРЅС‹РјРё = ") << time << TEXT(" РјСЃ.\n");
+			}
+			else cout << TEXT("РџСЂРёРЅСЏС‚ Р»РѕР¶РЅС‹Р№ РїР°РєРµС‚.\n");
+		}
+		return FUNC_SUCCESS;
+	}
+	catch (std::exception& e) {
+		/// TODO: РР»Рё РѕР±СЂР°С‰Р°С‚СЊСЃСЏ Рє РѕР±СЂР°Р±РѕС‚С‡РёРєСѓ РѕС€РёР±РѕРє
+		cout << e.what() << endl;
+		return FUNC_ERROR;
+	}
+}
+
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РІС‹РІРѕРґР° IP-Р°РґСЂРµСЃР° РєРѕРЅРµС‡РЅРѕРіРѕ СѓР·Р»Р°
+void ShowIpAddress(IN_ADDR& ip_num) {
+	uint8_t b1, b2, b3, b4;
+	b1 = ip_num.S_un.S_un_b.s_b1;
+	b2 = ip_num.S_un.S_un_b.s_b2;
+	b3 = ip_num.S_un.S_un_b.s_b3;
+	b4 = ip_num.S_un.S_un_b.s_b4;
+	cout << b1 << TEXT('.') << b2 << TEXT('.') << b3 << TEXT('.') << b4;
 }
 
 
 
-
-
-
-
-
-
 #ifdef _DEBUG 
-#define num1
+#define num1 1
 #else
-#define num2
+#define num2 2
 #endif

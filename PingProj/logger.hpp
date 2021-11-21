@@ -5,7 +5,7 @@
 
 using std::locale;
 
-// Типы сообщений, передаваемые логгеру
+// РўРёРїС‹ СЃРѕРѕР±С‰РµРЅРёР№, РїРµСЂРµРґР°РІР°РµРјС‹Рµ Р»РѕРіРіРµСЂСѓ
 #define INIT_MESSAGE	0
 #define INFO_MESSAGE	1
 #define ERROR_MESSAGE	2

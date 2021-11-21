@@ -4,54 +4,54 @@
 
 wFile LogFile;
 
-// Запуск логгера
+// Р—Р°РїСѓСЃРє Р»РѕРіРіРµСЂР°
 int InitLogger() {
 	try {
 		locale defaultLocale(dLocale);
 		LogFile.imbue(defaultLocale);
 		LogFile.open("log.txt", std::ios::app);
 		if (WriteMessage(INIT_MESSAGE, NULL, NULL) == FUNC_ERROR) {
-			/// TODO: Или обращаться к обработчику ошибок
+			/// TODO: РР»Рё РѕР±СЂР°С‰Р°С‚СЊСЃСЏ Рє РѕР±СЂР°Р±РѕС‚С‡РёРєСѓ РѕС€РёР±РѕРє
 			return FUNC_ERROR;
 		}
 		else return FUNC_SUCCESS;
 	}
 	catch (std::exception& e) {
-		/// TODO: Или обращаться к обработчику ошибок
+		/// TODO: РР»Рё РѕР±СЂР°С‰Р°С‚СЊСЃСЏ Рє РѕР±СЂР°Р±РѕС‚С‡РёРєСѓ РѕС€РёР±РѕРє
 		cout << e.what() << endl;
 		return FUNC_ERROR;
 	}
 }
 
-// Запись входящего сообщения с помощью логгера
+// Р—Р°РїРёСЃСЊ РІС…РѕРґСЏС‰РµРіРѕ СЃРѕРѕР±С‰РµРЅРёСЏ СЃ РїРѕРјРѕС‰СЊСЋ Р»РѕРіРіРµСЂР°
 int WriteMessage(int type, int errorCode, UINT dTime) {
 	try {
 		string time;
 		time = GetSystemTime();
 		switch (type) {
 		case INIT_MESSAGE:
-			LogFile << TEXT("\n[INIT] ") << time.c_str() << TEXT(" Зарегистрирован запуск программы.\n");
+			LogFile << TEXT("\n[INIT] ") << time.c_str() << TEXT(" Р—Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ Р·Р°РїСѓСЃРє РїСЂРѕРіСЂР°РјРјС‹.\n");
 			break;
 		case INFO_MESSAGE:
 			break;
 		case ERROR_MESSAGE:
 			break;
 		case CLOSE_MESSAGE:
-			LogFile << TEXT("[CLOSE] ") << time.c_str() << TEXT(" Программа была закрыта.\n");
+			LogFile << TEXT("[CLOSE] ") << time.c_str() << TEXT(" РџСЂРѕРіСЂР°РјРјР° Р±С‹Р»Р° Р·Р°РєСЂС‹С‚Р°.\n");
 			LogFile.close();
 			break;
 		}
 		return FUNC_SUCCESS;
 	}
 	catch (std::exception& e) {
-		/// TODO: Или обращаться к обработчику ошибок
+		/// TODO: РР»Рё РѕР±СЂР°С‰Р°С‚СЊСЃСЏ Рє РѕР±СЂР°Р±РѕС‚С‡РёРєСѓ РѕС€РёР±РѕРє
 		cout << e.what() << endl;
 		return FUNC_ERROR;
 	}
 
 }
 
-// Функция получения текущего системного времени
+// Р¤СѓРЅРєС†РёСЏ РїРѕР»СѓС‡РµРЅРёСЏ С‚РµРєСѓС‰РµРіРѕ СЃРёСЃС‚РµРјРЅРѕРіРѕ РІСЂРµРјРµРЅРё
 string GetSystemTime() {
 	SYSTEMTIME cur_time;
 	GetLocalTime(&cur_time);
