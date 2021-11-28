@@ -1,13 +1,11 @@
 #include "main.hpp"
 #include "logger.hpp"
 
-#pragma comment(lib, "Ws2_32.lib")
-
 // Главная функция программы
-int main(int argc, TCHAR* argv[]) {
+int _tmain(int argc, TCHAR* argv[]) {
 	setlocale(LC_ALL, dLocale);
-	//cout << sizeof(ECHOREPLY) << endl;
-	// TCHAR* argarr[] = {L"prog", L"8.8.8.8"};
+	// cout << sizeof(ECHOREQUEST) << endl;
+	TCHAR* argarr[] = {L"prog", L"8.8.8.8"};
 	WSADATA wsaData;
 	IN_ADDR IP_Address;
 	SOCKADDR_IN remote;
@@ -18,10 +16,10 @@ int main(int argc, TCHAR* argv[]) {
 	WORD port;
 	port = 1234;
 	DWORD timeout;
-	timeout = 5000;
+	timeout = 1000;
 	UINT steps, seq;
 	steps = 4;
-	seq = 1;
+	seq = 0;
 	clock_t start, end;
 
 	// Главная хрень
@@ -29,15 +27,16 @@ int main(int argc, TCHAR* argv[]) {
 	case FUNC_SUCCESS:
 		switch (InitNetworkSubsystem(wsaData)) {
 		case FUNC_SUCCESS:
-			switch (CheckParams(argc, argv, IP_Address)) {
+			switch (CheckParams(2, argarr, IP_Address)) {
+			//switch (CheckParams(argc, argv, IP_Address)) {
 			case FUNC_SUCCESS:
 				switch (InitSocks(remote, bind, local,
 					listen, IP_Address, port, timeout)) {
 				case FUNC_SUCCESS:
-					while (seq <= steps) {
+					while (seq < steps) {
 						switch (SendRequest(remote, listen, seq, start)) {
 						case FUNC_SUCCESS:
-							switch (GetReply(remote, local, listen, start, end)) {
+							switch (GetReply(remote, local, listen, start, end, argarr[1])) {
 							case FUNC_SUCCESS:
 								cout << 7 << endl;
 								break;
@@ -176,7 +175,7 @@ int CorrectIP_DNS(TCHAR* IP, IN_ADDR& IPtoNum) {
 		ADDRINFO hints;
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_INET;
-		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_socktype = SOCK_RAW;
 		hints.ai_protocol = IPPROTO_ICMP;
 		int errorStateCode;
 		errorStateCode = getaddrinfo(IP, NULL, &hints, &result);
@@ -197,8 +196,18 @@ int CorrectIP_DNS(TCHAR* IP, IN_ADDR& IPtoNum) {
 }
 
 // Инициализация сетевой подсистемы и сокета
-int InitSocks(SOCKADDR_IN& remote, SOCKADDR_IN& bind, SOCKADDR_IN& local, SOCKET& listen,
-	IN_ADDR& ip_num, WORD& port, DWORD& timeout) {
+int InitSocks(SOCKADDR_IN& remote, SOCKADDR_IN& bind, SOCKADDR_IN& local,
+	SOCKET& listen, IN_ADDR& ip_num, WORD& port, DWORD& timeout) {
+	// Настройка адресов
+	remote.sin_addr = ip_num;
+	remote.sin_family = AF_INET;
+	remote.sin_port = htons(port);
+	bind.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+	bind.sin_family = AF_INET;
+	bind.sin_port = htons(port);
+	local = { 0 };
+	local.sin_family = AF_INET;
+
 	// Создаём сокет и проверяем на наличие ошибок при создании
 	int errorStateCode;
 	listen = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -208,11 +217,6 @@ int InitSocks(SOCKADDR_IN& remote, SOCKADDR_IN& bind, SOCKADDR_IN& local, SOCKET
 		// Код для логгера и перехватчика ошибок
 		errorStateCode = WSAGetLastError();
 		cout << TEXT("Ошибка создания сокета: # ") << errorStateCode << TEXT(":\n");
-
-		/// TODO: Вынести в финальную функцию
-		// Код для логгера и перехватчика ошибок
-		closesocket(listen);
-		WSACleanup();
 		return FUNC_ERROR;
 	}
 
@@ -223,15 +227,6 @@ int InitSocks(SOCKADDR_IN& remote, SOCKADDR_IN& bind, SOCKADDR_IN& local, SOCKET
 		// Код для логгера и перехватчика ошибок
 		return FUNC_ERROR;
 	}
-
-	// Настройка адресов
-	remote.sin_addr = ip_num;
-	remote.sin_family = AF_INET;
-	remote.sin_port = htons(port);
-	bind.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-	bind.sin_family = AF_INET;
-	bind.sin_port = htons(port);
-	local.sin_family = AF_INET;
 	return FUNC_SUCCESS;
 }
 
@@ -240,13 +235,14 @@ int SendRequest(SOCKADDR_IN& remote, SOCKET& listen, WORD SeqNum, clock_t& start
 	try {
 		// Формируем эхо-запрос
 		ECHOREQUEST req;
+		req = { 0 };
 		req.icmpHdr.Type = 8;
 		req.icmpHdr.Code = 0;
 		req.icmpHdr.ID = (uint16_t)GetCurrentProcessId();
 		req.icmpHdr.Seq = SeqNum;
-		memset(req.cData, char(0xFF), DATA_SIZE);
 		req.dwTime = GetTickCount();
-		req.icmpHdr.Checksum = CRC16((uint8_t*)&req, sizeof(req));
+		memset(req.cData, char('Z'), DATA_SIZE);
+		req.icmpHdr.Checksum = CRC16((uint16_t*)&req, sizeof(req));
 		
 		// Отправляем данные
 		int erStat;
@@ -268,19 +264,23 @@ int SendRequest(SOCKADDR_IN& remote, SOCKET& listen, WORD SeqNum, clock_t& start
 }
 
 // Функция для расчёта контрольной суммы CRC16
-uint16_t CRC16(const uint8_t* data_p, unsigned int length) {
-	uint16_t x;
-	uint16_t crc = 0xFFFF;
-	while (length--) {
-		x = crc >> 8 ^ *data_p++;
-		x ^= x >> 4;
-		crc = (crc << 8) ^ (x << 12) ^ (x << 5) ^ x;
+uint16_t CRC16(uint16_t* addr, unsigned int length) {
+	const uint32_t offset = 0x00000010;
+	const uint32_t nand = 0x0000ffff;
+	register uint32_t sum = 0;
+	while (length > 1) {
+		sum += *addr++;
+		length -= sizeof(uint16_t);
 	}
-	return crc;
+	if (length > 0) sum += *(uint8_t*)addr;
+	while (sum >> offset) {
+		sum = (sum & nand) + (sum >> offset);
+	}
+	return (uint16_t)(~sum);
 }
 
 // Функция для получения эхо-ответа
-int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen, clock_t& start, clock_t& end) {
+int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen, clock_t& start, clock_t& end, TCHAR* addr) {
 	try {
 		const int BUFFER_SIZE = 256;
 		char buffer[BUFFER_SIZE];
@@ -293,9 +293,7 @@ int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen, clock_t& s
 		if (recvfrom(listen, buffer, BUFFER_SIZE, 0, (sockaddr*)&local, &local_size) == SOCKET_ERROR) {
 			if (WSAGetLastError() == WSAETIMEDOUT) {
 				/// TODO: Запись логгером, что превышено время ожидания
-				cout << TEXT("Узел: ");
-				ShowIpAddress(remote.sin_addr);
-				cout << TEXT(".\nПревышен интервал ожидания запроса.\n");
+				cout << TEXT("Узел: ") << addr << TEXT(".\nПревышен интервал ожидания запроса.\n");
 				timeout = true;
 			}
 			else {
@@ -307,13 +305,13 @@ int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen, clock_t& s
 
 		// Если время ожидания не истекло
 		if (!timeout) {
+			/// TODO: Записи логгера о полученном пакете
 			PECHOREPLY ptrReply;
 			ptrReply = (ECHOREPLY*)buffer;
 			if (ptrReply->EchoRequest.icmpHdr.ID == GetCurrentProcessId()) {
 				clock_t time = end - start;
-				cout << TEXT("Ответ от ");
-				ShowIpAddress(remote.sin_addr);
-				cout << TEXT(": время обмена данными = ") << time << TEXT(" мс.\n");
+				cout << TEXT("Ответ от ") << addr
+					<< TEXT(": время обмена данными = ") << time << TEXT(" мс.\n");
 			}
 			else cout << TEXT("Принят ложный пакет.\n");
 		}
@@ -326,15 +324,6 @@ int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen, clock_t& s
 	}
 }
 
-// Функция для вывода IP-адреса конечного узла
-void ShowIpAddress(IN_ADDR& ip_num) {
-	uint8_t b1, b2, b3, b4;
-	b1 = ip_num.S_un.S_un_b.s_b1;
-	b2 = ip_num.S_un.S_un_b.s_b2;
-	b3 = ip_num.S_un.S_un_b.s_b3;
-	b4 = ip_num.S_un.S_un_b.s_b4;
-	cout << b1 << TEXT('.') << b2 << TEXT('.') << b3 << TEXT('.') << b4;
-}
 
 
 

@@ -7,10 +7,14 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <string>
+#include <tchar.h>
 #include <vector>
 
 using std::vector;
 using std::endl;
+
+// Подключение статической библиотеки
+#pragma comment(lib, "Ws2_32.lib")
 
 // Выясняем кодировку: использовать Юникод или ASCII кодировку
 #ifdef UNICODE
@@ -82,14 +86,14 @@ typedef struct tagECHOREPLY {
 	ECHOREQUEST EchoRequest;		// Эхо-запрос
 } ECHOREPLY, *PECHOREPLY;			// Псевдонимы типа для структуры
 
-
+/*----- Прототипы функций -----*/
+//
 int InitNetworkSubsystem(WSADATA&);
 int CheckParams(int, TCHAR*[], IN_ADDR&);
 int CorrectIP_DNS(TCHAR*, IN_ADDR&);
 int InitSocks(SOCKADDR_IN&, SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, IN_ADDR&, WORD&, DWORD&);
 int SendRequest(SOCKADDR_IN&, SOCKET&, WORD, clock_t&);
-uint16_t CRC16(const uint8_t*, unsigned int);
-int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&);
-void ShowIpAddress(IN_ADDR&);
+uint16_t CRC16(uint16_t*, unsigned int);
+int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&, TCHAR*);
 
 #endif
