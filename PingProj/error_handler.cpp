@@ -1,3 +1,4 @@
+#include "logger.hpp"
 #include "error_handler.hpp"
 
 int GlobalErrorCode = 0;

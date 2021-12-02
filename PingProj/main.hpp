@@ -5,11 +5,11 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
 #include <string>
 #include <tchar.h>
 #include <vector>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 
 using std::exception;
 using std::vector;
@@ -85,6 +85,13 @@ typedef struct tagECHOREPLY {
 	ECHOREQUEST EchoRequest;		// Эхо-запрос
 } ECHOREPLY, *PECHOREPLY;			// Псевдонимы типа для структуры
 
+// Структура, описывающая статистку отправленных, полученных и потерянных пакетов
+typedef struct tagSTAT {
+	UINT sended;
+	UINT received;
+	UINT lost;
+} STAT, *PSTAT;
+
 /*----- Прототипы функций -----*/
 //
 int InitNetworkSubsystem(WSADATA&);
@@ -92,11 +99,9 @@ int CheckParams(int, TCHAR*[], IN_ADDR&);
 int CorrectIP_DNS(TCHAR*, IN_ADDR&);
 string IPtoStr(IN_ADDR&);
 int InitSocks(SOCKADDR_IN&, SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, IN_ADDR&, WORD&, DWORD&);
-int SendRequest(SOCKADDR_IN&, SOCKET&, WORD, clock_t&, string&);
+int SendRequest(SOCKADDR_IN&, SOCKET&, WORD, clock_t&, STAT&, string&);
 uint16_t CRC16(uint16_t*, unsigned int);
-int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&, string&);
-
-#include "logger.hpp"
-#include "error_handler.hpp"
+int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&, STAT&, vector<clock_t>&, string&);
+int Statistics(UINT&, STAT&, vector<clock_t>&, string&);
 
 #endif

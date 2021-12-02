@@ -11,7 +11,8 @@
 #define INIT_SOCKET_ERROR			50
 #define SEND_REQUEST_ERROR			60
 #define GET_REPLY_ERROR				70
-#define ERROR_HANDLE_FAILURE		80
+#define STATISTICS_ERROR			80
+#define ERROR_HANDLE_FAILURE		100
 
 // Определения некоторых дополнительных ошибок
 #define WSAVERNOTFOUND			10011L
@@ -31,11 +32,11 @@ void CloseProgram(BOOL, SOCKET*);
 
 /*-- Вывод информации в режиме отладки --*/
 #ifdef _DEBUG
-#define CurFunc			TEXT("Ошибка в функции: ") << ConvertCharToWstring(__func__).c_str() << endl
-#define DebugInfo(q)	RedColorText(); cout << q; WhiteColorText();
+	#define CurFunc			TEXT("Ошибка в функции: ") << ConvertCharToWstring(__func__).c_str()
+	#define DebugInfo(q)	RedColorText(); cout << q << endl; WhiteColorText();
 #else
-#define CurFunc
-#define DebugInfo(q)
+	#define CurFunc
+	#define DebugInfo(q)
 #endif
 
 #endif

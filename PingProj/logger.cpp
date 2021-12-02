@@ -1,6 +1,5 @@
 #include "logger.hpp"
-#include <Windows.h>
-#include <exception>
+#include "error_handler.hpp"
 
 wFile LogFile;
 
