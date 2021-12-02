@@ -2,6 +2,7 @@
 #define MAIN_H
 
 #include <ctime>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <WinSock2.h>
@@ -10,6 +11,7 @@
 #include <tchar.h>
 #include <vector>
 
+using std::exception;
 using std::vector;
 using std::endl;
 
@@ -27,7 +29,7 @@ using std::endl;
 	#define inet_pton InetPtonW
 	#define getaddrinfo GetAddrInfoW 
 	#define ADDRINFO ADDRINFOW
-	#define strlen(quote) wcslen(quote)
+	#define Convert(quote) ConvertCharToWstring(quote)
 #else
 	#define cout std::cout
 	#define dLocale "Russian"
@@ -38,11 +40,8 @@ using std::endl;
 	#define inet_pton inet_pton
 	#define getaddrinfo getaddrinfo
 	#define ADDRINFO ADDRINFOA
-	#define strlen(quote) strlen(quote)
+	#define Convert(quote) string(quote)
 #endif
-
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
 
 #define FUNC_SUCCESS	0	// Функция завершена удачно
 #define FUNC_ERROR		1	// Функция завершилась с ошибкой
@@ -91,9 +90,13 @@ typedef struct tagECHOREPLY {
 int InitNetworkSubsystem(WSADATA&);
 int CheckParams(int, TCHAR*[], IN_ADDR&);
 int CorrectIP_DNS(TCHAR*, IN_ADDR&);
+string IPtoStr(IN_ADDR&);
 int InitSocks(SOCKADDR_IN&, SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, IN_ADDR&, WORD&, DWORD&);
-int SendRequest(SOCKADDR_IN&, SOCKET&, WORD, clock_t&);
+int SendRequest(SOCKADDR_IN&, SOCKET&, WORD, clock_t&, string&);
 uint16_t CRC16(uint16_t*, unsigned int);
-int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&, TCHAR*);
+int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&, string&);
+
+#include "logger.hpp"
+#include "error_handler.hpp"
 
 #endif

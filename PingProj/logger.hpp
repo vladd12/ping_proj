@@ -11,8 +11,10 @@ using std::locale;
 #define ERROR_MESSAGE	2
 #define CLOSE_MESSAGE	3
 
+/*-------- Прототипы функций --------*/
+//
 int InitLogger();
-int WriteMessage(int, int, UINT);
+int WriteMessage(int, string*);
 string GetSystemTime();
 
 #endif
