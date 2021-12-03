@@ -1,8 +1,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include "main.hpp"
-
 using std::locale;
 
 // Типы сообщений, передаваемые логгеру

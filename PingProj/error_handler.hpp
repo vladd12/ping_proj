@@ -1,8 +1,6 @@
 #ifndef ERRHANDLE_H
 #define ERRHANDLE_H
 
-#include "main.hpp"
-
 // Типы глобальных ошибок
 #define INIT_LOGGER_ERROR			10
 #define WRITE_LOG_ERROR				20

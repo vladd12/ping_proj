@@ -1,5 +1,4 @@
-#include "logger.hpp"
-#include "error_handler.hpp"
+#include "main.hpp"
 
 wFile LogFile;
 

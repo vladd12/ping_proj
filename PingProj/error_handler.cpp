@@ -1,5 +1,4 @@
-#include "logger.hpp"
-#include "error_handler.hpp"
+#include "main.hpp"
 
 int GlobalErrorCode = 0;
 
@@ -118,7 +117,7 @@ void HandleError(int majorErrCode, int minorErrCode, const char* const errStr) {
 					errString += TEXT("Буферное пространство недоступно.\n");
 					break;
 				case WSAEHOSTUNREACH:
-					errString += TEXT("Невозможно удалётся с удалённым хостом.\n");
+					errString += TEXT("Невозможно связаться с удалённым хостом.\n");
 					break;
 				case WSAECONNABORTED:
 					errString += TEXT("Виртуальный канал был прерван из-за тайм-аута или другого сбоя.\n");
