@@ -1,11 +1,10 @@
-#include "logger.hpp"
-#include "error_handler.hpp"
+#include "main.hpp"
 
 // Главная функция программы
 int _tmain(int argc, TCHAR* argv[]) {
 	setlocale(LC_ALL, dLocale);
 	// cout << sizeof(ECHOREQUEST) << endl;
-	// TCHAR* argarr[] = { L"prog", L"8.8.8.8" };
+	// TCHAR* argarr[] = { L"prog", L"google.com" };
 	WSADATA wsaData;
 	IN_ADDR IP_Address;
 	string IP_Str;
@@ -337,6 +336,7 @@ int GetReply(SOCKADDR_IN& remote, SOCKADDR_IN& local, SOCKET& listen,
 			WriteMessage(INFO_MESSAGE, &info);
 			cout << info.c_str();
 		}
+		Sleep(1000);
 		return FUNC_SUCCESS;
 	}
 	// Была получена ошибка во время выполнения
@@ -354,10 +354,10 @@ int Statistics(UINT& steps, STAT& net_stat, vector<clock_t>& time_vec, string& i
 		UINT percent = 100 / steps;
 		UINT percLost = percent * net_stat.lost;
 		cout << TEXT("\nСтатистика ping для ") << ip_str.c_str() << TEXT(":\n    ");
-		string info_str = TEXT("Пакетов: отправлено = ") + toStr(net_stat.sended)
-			+ TEXT(", получено = ") + toStr(net_stat.received)
-			+ TEXT(", потеряно = ") + toStr(net_stat.lost) + TEXT("    (")
-			+ toStr(percLost) + TEXT(" % потерь)\n");
+		string info_str = TEXT("Пакетов: отправлено=") + toStr(net_stat.sended)
+			+ TEXT(", получено=") + toStr(net_stat.received)
+			+ TEXT(", потеряно=") + toStr(net_stat.lost) + TEXT("    (")
+			+ toStr(percLost) + TEXT("% потерь)\n");
 
 		// Выводим сформированную строку в лог и консоль
 		WriteMessage(INFO_MESSAGE, &info_str);
@@ -374,7 +374,7 @@ int Statistics(UINT& steps, STAT& net_stat, vector<clock_t>& time_vec, string& i
 			for (size_t i = 0; i < vecSize; i++) {
 				clock_t elem = time_vec[i];
 				if (elem < min) min = elem;
-				else if (elem > max) max = elem;
+				if (elem > max) max = elem;
 				avg += elem;
 			}
 			avg = avg / vecSize;

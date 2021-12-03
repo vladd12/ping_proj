@@ -104,4 +104,7 @@ uint16_t CRC16(uint16_t*, unsigned int);
 int GetReply(SOCKADDR_IN&, SOCKADDR_IN&, SOCKET&, clock_t&, clock_t&, STAT&, vector<clock_t>&, string&);
 int Statistics(UINT&, STAT&, vector<clock_t>&, string&);
 
+#include "logger.hpp"
+#include "error_handler.hpp"
+
 #endif
